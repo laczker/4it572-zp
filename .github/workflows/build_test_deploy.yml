@@ -96,7 +96,7 @@ jobs:
   Deploy:
     needs: [Build, Test]
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/master' }}
 
     steps:
       - name: Git Checkout
@@ -118,7 +118,7 @@ jobs:
       - name: Ansible script
         uses: dawidd5/action-ansible-playbook@v2.5.0
         with:
-          playbook: ansible_playbook.yml
+          playbook: ec2_deploy.yml
           vault_password: ${{ secrets.VAULT_PASSWORD }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           options: |
