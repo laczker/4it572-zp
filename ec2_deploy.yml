@@ -1,75 +1,125 @@
-- name: Create new EC2 instance
+- name: Installation
+  host: localhost
+  connection: local
+
+  tasks:
+    - name: boto and boto3
+      pip:
+        name:
+          - boto
+          - boto3
+
+
+- name: Delete old EC2 Instance
+  host: localhost
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+  connection: local
+
+  tasks:
+
+    - name: Instance data
+      ec2_instance_facts:
+        region: us-east-1
+        filters:
+          "tag:eshop": 1
+      register: about_instances
+
+    - name: Terminate instance
+      ec2:
+        instance_ids: "{{ item.instance_id }}"
+        region: us-east-1
+        state: absent
+        wait: yes
+      with_items: "{{ about_instances.instances }}"
+
+
+- name: New EC2 Instance creation and config
   hosts: localhost
   connection: local
 
   tasks:
-    - name: Launch EC2 Instance
+
+    - name: Launch EC2 instance
       ec2:
         instance_type: t2.micro
         image: ami-0022f774911c1d690
         region: us-east-1
         key_name: devops
-        vpc_subnet_id:  subnet-00e983ab16517fb4d
+        vpc_subnet_id: subnet-00e983ab16517fb4d
         assign_public_ip: yes
         wait: yes
         count: 1
-        aws_access_key: "{{access_key}}"
-        aws_secret_key: "{{secret_key}}"
-        security_token: "{{session_token}}"
+        group: eshop
+        instance_tags:
+          eshop: 1
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
       register: ec2
-    - name: Add instance host to group
+
+    - name: Groupping instance
       add_host:
         hostname: "{{ item.public_ip }}"
         groupname: launched
         loop: "{{ ec2.instances }}"
 
-    - name: Wait for ssh connection
-        delegate_to: "{{ item.public_ip }}"
-        wait_for_connection:
-          delay: 30
-          timeout: 300
-        loop: "{{ ec2.instances }}"
+    - name: Wait for SSH
+      delegate_to: "{{ item.public_ip }}"
+      wait_for_connection:
+        delay: 30
+        timeout: 300
+      loop: "{{ ec2.instances }}"
 
-- name: Configure EC2
+
+- name: Deployment to EC2 & Config
   hosts: launched
   remote_user: ec2-user
   connection: ssh
 
   tasks:
-    - name: Install Git and Docker
+
+    - name: Install git and docker
       yum:
         name:
           - git
           - docker
         state: latest
         update_cache: yes
-      become: yes
+      become: yes   # sudo
+
     - service:
         name: docker
         state: started
         enabled: yes
       become: yes
-    - name: Start Docker on startup
+
+    - name: Docker on startup
       shell: systemctl enable docker
       become: yes
-    - name: Set rights to Docker
+
+    - name: Rights to Docker
       shell: usermod -a -G docker ec2-user
       become: yes
-    - name: Get eshop from GIT
+
+    - name: Clone from my github
       git:
-        repo: 'https://github.com/laczker/4it572-zp.git'
+        repo: https://github.com/laczker/4it572-zp.git
         dest: ./app
-    - name: Build Docker with e-shop
-      shell: cd app && docker build -t myeshop:latest .
+
+    - name: Build Docker
+      shell: cd app && docker build -t eshop-app:latest .
       become: yes
-    - name: Run Docker with eshop
-      shell: docker run -p 80:3000 myeshop
+
+    - name: Running docker
+      shell: docker run -t -p 80:3000 eshop-app
       async: 45
       poll: 0
       become: yes
+
     - wait_for:
         port:
           80
-
-
-
