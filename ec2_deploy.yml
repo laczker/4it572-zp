@@ -1,5 +1,5 @@
 - name: Installation
-  host: localhost
+  hosts: localhost
   connection: local
 
   tasks:
@@ -11,7 +11,7 @@
 
 
 - name: Delete old EC2 Instance
-  host: localhost
+  hosts: localhost
   module_defaults:
     group/aws:
       aws_access_key: "{{ aws_access_key }}"
