@@ -100,12 +100,12 @@ jobs:
 
     steps:
       - name: Git Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
 
       - name: Node modules prep
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.npm
@@ -113,9 +113,8 @@ jobs:
             ./build
           key: ${{ runner.os }}-build-${{ github.run_id }}
 
-
       - name: Ansible script
-        uses: dawidd5/action-ansible-playbook@v2.5.0
+        uses: dawidd6/action-ansible-playbook@v2.5.0
         with:
           playbook: ec2_deploy.yml
           vault_password: ${{ secrets.VAULT_PASSWORD }}
