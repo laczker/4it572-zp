@@ -1,10 +1,9 @@
 name: 'Build and test and deploy our Eshop'
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   Install:
