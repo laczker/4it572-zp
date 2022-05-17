@@ -14,9 +14,9 @@
   hosts: localhost
   module_defaults:
     group/aws:
-      aws_access_key: "{{ aws_access_key }}"
-      aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
+      aws_access_key: "{{ access_key }}"
+      aws_secret_key: "{{ secret_key }}"
+      security_token: "{{ session_token }}"
   connection: local
 
   tasks:
